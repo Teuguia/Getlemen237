@@ -104,7 +104,7 @@ export default function Welcome({ auth, categories = [], featuredProducts = [] }
                     </div>
                     {featuredProducts.length === 0 && (
                         <div className="mt-6 border border-neutral-200 bg-[#faf8f3] p-8 text-sm text-neutral-600">
-                            Le catalogue est pret. Lance les migrations et seeders pour afficher les produits.
+                            Les nouveautes seront disponibles tres prochainement.
                         </div>
                     )}
                 </section>
