@@ -7,8 +7,12 @@ const tabs = ['Description', 'Livraison', 'Retours', 'Guide des tailles'];
 
 export default function Show({ auth, product, whatsappPhone }) {
     const { props } = usePage();
-    const image = product.media?.find((media) => media.is_primary)?.path ?? productImage(product);
-    const thumbnails = product.media?.length ? product.media : [{ path: image }, { path: image }, { path: image }];
+    const mediaImages = product.media?.filter((media) => media.type === 'image') ?? [];
+    const mediaVideos = product.media?.filter((media) => media.type === 'video') ?? [];
+    const fallbackImage = { type: 'image', path: productImage(product), alt_text: product.name, is_primary: true };
+    const [selectedMedia, setSelectedMedia] = useState(mediaImages.find((media) => media.is_primary) ?? mediaImages[0] ?? fallbackImage);
+    const [activeTab, setActiveTab] = useState('Description');
+    const thumbnails = mediaImages.length ? mediaImages : [fallbackImage];
     const colors = [...new Set(product.variants.map((variant) => variant.color_name).filter(Boolean))];
     const sizes = [...new Set(product.variants.map((variant) => variant.size).filter(Boolean))];
     const [selectedColor, setSelectedColor] = useState(colors[0] ?? '');
@@ -77,16 +81,25 @@ export default function Show({ auth, product, whatsappPhone }) {
                     <div className="grid gap-5 lg:grid-cols-[1.08fr_.92fr] lg:gap-10">
                         <div>
                             <div className="aspect-[1.18/1] overflow-hidden rounded bg-[#e8e1d8] sm:aspect-[1.08/1]">
-                                <img src={image} alt={product.name} className="h-full w-full object-cover" />
+                                {selectedMedia.type === 'video' ? (
+                                    <video src={selectedMedia.path} controls className="h-full w-full object-cover" />
+                                ) : (
+                                    <img src={selectedMedia.path} alt={product.name} className="h-full w-full object-cover" />
+                                )}
                             </div>
-                            <div className="mt-3 grid grid-cols-4 gap-2 sm:mt-5 sm:grid-cols-3 sm:gap-4">
+                            <div className="mt-3 grid grid-cols-4 gap-2 sm:mt-5 sm:grid-cols-4 sm:gap-4">
                                 {thumbnails.slice(0, 3).map((media, index) => (
-                                    <button key={`${media.path}-${index}`} type="button" className="aspect-square overflow-hidden rounded border border-neutral-200 bg-[#e8e1d8] sm:aspect-[4/3]">
+                                    <button key={`${media.path}-${index}`} type="button" onClick={() => setSelectedMedia(media)} className={`aspect-square overflow-hidden rounded border bg-[#e8e1d8] sm:aspect-[4/3] ${selectedMedia.path === media.path ? 'border-[#c99524]' : 'border-neutral-200'}`}>
                                         <img src={media.path} alt={product.name} className="h-full w-full object-cover" />
                                     </button>
                                 ))}
-                                <button type="button" className="flex aspect-square flex-col items-center justify-center rounded bg-[#111] text-[11px] font-bold uppercase text-white sm:hidden">
-                                    <span className="mb-1 flex h-6 w-6 items-center justify-center rounded-full border border-white">▶</span>
+                                <button
+                                    type="button"
+                                    onClick={() => mediaVideos[0] && setSelectedMedia(mediaVideos[0])}
+                                    disabled={!mediaVideos.length}
+                                    className="flex aspect-square flex-col items-center justify-center rounded bg-[#111] text-[11px] font-bold uppercase text-white disabled:opacity-40 sm:aspect-[4/3]"
+                                >
+                                    <span className="mb-1 flex h-6 w-6 items-center justify-center rounded-full border border-white">Q</span>
                                     Voir la video
                                 </button>
                             </div>
@@ -146,24 +159,44 @@ export default function Show({ auth, product, whatsappPhone }) {
 
                     <section className="mt-8 sm:mt-16">
                         <div className="flex gap-7 overflow-x-auto border-b border-neutral-200 text-sm font-semibold sm:flex-wrap sm:gap-12">
-                            {tabs.map((tab, index) => (
-                                <button key={tab} type="button" className={`whitespace-nowrap pb-3 sm:pb-4 ${index === 0 ? 'border-b-4 border-[#111]' : ''}`}>
+                            {tabs.map((tab) => (
+                                <button key={tab} type="button" onClick={() => setActiveTab(tab)} className={`whitespace-nowrap pb-3 sm:pb-4 ${activeTab === tab ? 'border-b-4 border-[#111]' : ''}`}>
                                     {tab}
                                 </button>
                             ))}
                         </div>
-                        <div className="hidden border border-t-0 border-neutral-200 p-8 text-sm leading-7 text-neutral-700 sm:block">
-                            <p>{product.name} elegant, concu pour allier confort et raffinement. Ideal pour le bureau, les ceremonies et vos sorties.</p>
-                            <ul className="mt-5 space-y-2">
-                                <li>&gt; Matiere : Cuir veritable ou textile premium selon modele</li>
-                                <li>&gt; Semelle : Anti-derapante</li>
-                                <li>&gt; Style : Classique et moderne</li>
-                                <li>&gt; Origine : Europe</li>
-                            </ul>
+                        <div className="border border-t-0 border-neutral-200 p-6 text-sm leading-7 text-neutral-700 sm:p-8">
+                            <TabContent tab={activeTab} product={product} />
                         </div>
                     </section>
                 </section>
             </main>
+        </>
+    );
+}
+
+function TabContent({ tab, product }) {
+    if (tab === 'Livraison') {
+        return <p>Livraison disponible a Yaounde. Les frais sont confirmes avant validation finale de la commande.</p>;
+    }
+
+    if (tab === 'Retours') {
+        return <p>Les retours et echanges sont traites en boutique apres verification de l'etat du produit.</p>;
+    }
+
+    if (tab === 'Guide des tailles') {
+        return <p>Choisissez votre taille habituelle. Pour les chaussures, essayez en boutique si vous hesitez entre deux pointures.</p>;
+    }
+
+    return (
+        <>
+            <p>{product.name} elegant, concu pour allier confort et raffinement. Ideal pour le bureau, les ceremonies et vos sorties.</p>
+            <ul className="mt-5 space-y-2">
+                <li>&gt; Matiere : Cuir veritable ou textile premium selon modele</li>
+                <li>&gt; Semelle : Anti-derapante</li>
+                <li>&gt; Style : Classique et moderne</li>
+                <li>&gt; Origine : Europe</li>
+            </ul>
         </>
     );
 }

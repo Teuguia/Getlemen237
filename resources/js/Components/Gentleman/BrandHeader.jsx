@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { useState } from 'react';
 
 const navItems = [
     ['Accueil', 'home'],
@@ -10,6 +11,7 @@ const navItems = [
 ];
 
 export default function BrandHeader({ auth, leftLabel = 'Menu', leftHref = null }) {
+    const [menuOpen, setMenuOpen] = useState(false);
     const isStaff = ['admin', 'manager', 'seller'].includes(auth?.user?.role);
 
     return (
@@ -20,7 +22,7 @@ export default function BrandHeader({ auth, leftLabel = 'Menu', leftHref = null 
                         {leftLabel}
                     </Link>
                 ) : (
-                    <button type="button" className="text-xs font-bold uppercase tracking-wide">
+                    <button type="button" onClick={() => setMenuOpen((open) => !open)} className="text-xs font-bold uppercase tracking-wide" aria-expanded={menuOpen}>
                         {leftLabel}
                     </button>
                 )}
@@ -33,6 +35,39 @@ export default function BrandHeader({ auth, leftLabel = 'Menu', leftHref = null 
                     Panier
                 </Link>
             </div>
+
+            {menuOpen && (
+                <nav className="border-t border-white/10 px-5 pb-5 text-sm font-bold uppercase tracking-wide sm:hidden">
+                    <div className="grid gap-3">
+                        {navItems.map(([label, routeName]) => (
+                            <Link key={label} href={route(routeName)} className="border-b border-white/10 py-3" onClick={() => setMenuOpen(false)}>
+                                {label}
+                            </Link>
+                        ))}
+                        {auth?.user ? (
+                            <>
+                                <Link href={route('account.orders')} className="border-b border-white/10 py-3" onClick={() => setMenuOpen(false)}>
+                                    Mon compte
+                                </Link>
+                                {isStaff && (
+                                    <Link href={route('dashboard')} className="border-b border-white/10 py-3 text-[#d5a62d]" onClick={() => setMenuOpen(false)}>
+                                        Admin
+                                    </Link>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <Link href={route('login')} className="border-b border-white/10 py-3" onClick={() => setMenuOpen(false)}>
+                                    Se connecter
+                                </Link>
+                                <Link href={route('register')} className="border-b border-white/10 py-3" onClick={() => setMenuOpen(false)}>
+                                    Creer un compte
+                                </Link>
+                            </>
+                        )}
+                    </div>
+                </nav>
+            )}
 
             <div className="mx-auto hidden max-w-7xl flex-col items-center px-4 pt-4 sm:flex">
                 <Link href={route('home')} className="text-center font-serif text-[#d5a62d]">
@@ -53,6 +88,11 @@ export default function BrandHeader({ auth, leftLabel = 'Menu', leftHref = null 
                     <Link href={route('cart.show')} className="whitespace-nowrap border-b border-transparent px-1 pb-1 text-white transition hover:border-[#c99524] hover:text-[#c99524]">
                         Panier
                     </Link>
+                    {auth?.user && (
+                        <Link href={route('account.orders')} className="whitespace-nowrap border-b border-transparent px-1 pb-1 text-white transition hover:border-[#c99524] hover:text-[#c99524]">
+                            Mon compte
+                        </Link>
+                    )}
                     {isStaff && (
                         <Link href={route('dashboard')} className="whitespace-nowrap border-b border-transparent px-1 pb-1 text-[#d5a62d]">
                             Admin

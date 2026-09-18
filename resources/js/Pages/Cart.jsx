@@ -1,11 +1,14 @@
 import BrandHeader from '@/Components/Gentleman/BrandHeader';
 import { formatPrice, productImage } from '@/Components/Gentleman/brand';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 
 const steps = ['Panier', 'Livraison', 'Paiement', 'Confirmation'];
 
 export default function Cart({ auth, items = [], checkoutUser, deliveryFeeCents = 0 }) {
     const { props } = usePage();
+    const [promoCode, setPromoCode] = useState('');
+    const [promoMessage, setPromoMessage] = useState('');
     const subtotal = items.reduce((sum, item) => sum + item.unit_price_cents * item.quantity, 0);
     const total = subtotal + deliveryFeeCents;
     const checkoutForm = useForm({
@@ -29,6 +32,15 @@ export default function Cart({ auth, items = [], checkoutUser, deliveryFeeCents 
 
     const checkout = () => {
         checkoutForm.post(route('cart.checkout'), { preserveScroll: true });
+    };
+
+    const applyPromo = () => {
+        if (!promoCode.trim()) {
+            setPromoMessage('Entrez un code promotionnel.');
+            return;
+        }
+
+        setPromoMessage('Code recu. La remise sera confirmee par la boutique avant paiement.');
     };
 
     return (
@@ -109,9 +121,10 @@ export default function Cart({ auth, items = [], checkoutUser, deliveryFeeCents 
                     <div className="mt-6 sm:max-w-xl sm:ml-auto">
                         <label className="block text-sm font-semibold sm:hidden">Code promotionnel</label>
                         <div className="mt-2 grid grid-cols-[1fr_110px] gap-2 sm:hidden">
-                            <input className="h-12 rounded border-neutral-300 text-sm" placeholder="Entrez votre code" />
-                            <button type="button" className="rounded bg-[#111] text-sm font-bold uppercase text-white">Appliquer</button>
+                            <input className="h-12 rounded border-neutral-300 text-sm" placeholder="Entrez votre code" value={promoCode} onChange={(event) => setPromoCode(event.target.value)} />
+                            <button type="button" onClick={applyPromo} className="rounded bg-[#111] text-sm font-bold uppercase text-white">Appliquer</button>
                         </div>
+                        {promoMessage && <p className="mt-2 text-xs font-semibold text-[#b97f19] sm:hidden">{promoMessage}</p>}
 
                         <div className="mt-6 text-sm">
                             <SummaryRow label="Sous-total" value={subtotal} />

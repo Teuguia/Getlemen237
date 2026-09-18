@@ -149,6 +149,14 @@ class StorefrontController extends Controller
             'discount_percentage' => $product->discountPercentage(),
             'primary_image' => $product->primaryMedia?->path,
             'stock_total' => $product->variants->sum('stock_quantity'),
+            'variants' => $product->variants->map(fn ($variant) => [
+                'id' => $variant->id,
+                'color_name' => $variant->color_name,
+                'color_hex' => $variant->color_hex,
+                'size' => $variant->size,
+                'stock_quantity' => $variant->stock_quantity,
+                'is_in_stock' => $variant->isInStock(),
+            ])->values(),
         ];
 
         if ($detailed) {
